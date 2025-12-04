@@ -1,6 +1,5 @@
 """华容道游戏主类"""
 
-import os
 import sys
 
 import pygame

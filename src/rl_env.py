@@ -129,6 +129,13 @@ class HuarongdaoEnv:
             # 无效动作
             return self._get_state(), -10, False
 
+        # 记录曹操当前位置以计算奖励
+        cao_cao = None
+        for p in self.pieces:
+            if p.id == 1:
+                cao_cao = p
+                break
+
         # 创建临时棋盘进行检测
         temp_board = self.board.copy()
         # 清除当前棋子占据的位置
@@ -142,7 +149,12 @@ class HuarongdaoEnv:
         valid = True
 
         # 检查边界
-        if new_x < 0 or new_y < 0 or new_x + piece.width > BOARD_WIDTH or new_y + piece.height > BOARD_HEIGHT:
+        if (
+            new_x < 0
+            or new_y < 0
+            or new_x + piece.width > BOARD_WIDTH
+            or new_y + piece.height > BOARD_HEIGHT
+        ):
             valid = False
 
         # 检查碰撞
@@ -171,9 +183,23 @@ class HuarongdaoEnv:
                 reward = 100
                 done = True
             else:
-                reward = 1  # 小奖励鼓励移动
+                # 计算移动奖励
+                # 如果是曹操移动
+                if piece.id == 1:
+                    # 曹操向出口方向移动（向下）给予正奖励
+                    if dy > 0:
+                        reward = 0.5
+                    # 曹操远离出口方向移动（向上）给予轻微惩罚
+                    elif dy < 0:
+                        reward = -0.3
+                    # 水平移动给予较小惩罚，避免AI反复横跳
+                    else:
+                        reward = -0.1
+                # 如果是其他棋子移动
+                else:
+                    reward = -0.05
         else:
-            # 无效移动给予惩罚
+            # 无效移动给予较大惩罚
             reward = -10
 
         return self._get_state(), reward, done

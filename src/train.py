@@ -7,11 +7,8 @@ from collections import deque
 import numpy as np
 import torch
 
-# 添加项目根目录到路径中
-sys.path.append(os.path.dirname(os.path.dirname(__file__)))
-
-from src.dqn_agent import DQNAgent
-from src.rl_env import HuarongdaoEnv
+from .dqn_agent import DQNAgent
+from .rl_env import HuarongdaoEnv
 
 
 def train(episodes: int = 1000):
@@ -69,7 +66,9 @@ def train(episodes: int = 1000):
         # 打印进度
         if episode % 100 == 0:
             avg_score = np.mean(scores)
-            print(f"Episode {episode}, Average Score: {avg_score:.2f}, Epsilon: {agent.epsilon:.2f}")
+            print(
+                f"Episode {episode}, Average Score: {avg_score:.2f}, Epsilon: {agent.epsilon:.2f}"
+            )
 
     # 保存模型
     torch.save(agent.q_network.state_dict(), "huarongdao_dqn.pth")
