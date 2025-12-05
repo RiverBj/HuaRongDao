@@ -1,6 +1,5 @@
-"""华容道强化学习环境"""
-
-from typing import List, Tuple
+import random
+from typing import List, Optional, Tuple
 
 import numpy as np
 
@@ -64,11 +63,11 @@ class HuarongdaoEnv:
             for i in range(piece.y, piece.y + piece.height):
                 for j in range(piece.x, piece.x + piece.width):
                     self.board[i][j] = piece.id
-
+    
     def _get_state(self) -> np.ndarray:
         """获取当前状态"""
         return self.board.copy()
-
+    
     def get_valid_actions(self) -> List[Tuple[int, int, int]]:
         """获取有效的动作列表 (piece_id, dx, dy)"""
         actions = []
@@ -81,21 +80,16 @@ class HuarongdaoEnv:
                 for i in range(piece.y, piece.y + piece.height):
                     for j in range(piece.x, piece.x + piece.width):
                         temp_board[i][j] = 0
-
+                
                 # 检查移动是否有效
                 new_x = piece.x + dx
                 new_y = piece.y + dy
                 valid = True
-
+                
                 # 检查边界
-                if (
-                    new_x < 0
-                    or new_y < 0
-                    or new_x + piece.width > BOARD_WIDTH
-                    or new_y + piece.height > BOARD_HEIGHT
-                ):
+                if new_x < 0 or new_y < 0 or new_x + piece.width > BOARD_WIDTH or new_y + piece.height > BOARD_HEIGHT:
                     valid = False
-
+                
                 # 检查碰撞
                 if valid:
                     for i in range(new_y, new_y + piece.height):
@@ -105,30 +99,37 @@ class HuarongdaoEnv:
                                 break
                         if not valid:
                             break
-
+                
                 if valid:
                     actions.append((piece.id, dx, dy))
-
+        
         return actions
-
+    
+    def get_random_valid_action(self) -> Optional[Tuple[int, int, int]]:
+        """随机选择一个有效的动作"""
+        valid_actions = self.get_valid_actions()
+        if valid_actions:
+            return random.choice(valid_actions)
+        return None
+    
     def step(self, action: Tuple[int, int, int]) -> Tuple[np.ndarray, float, bool]:
         """
         执行动作
         返回: (新状态, 奖励, 是否结束)
         """
         piece_id, dx, dy = action
-
+        
         # 找到对应的棋子
         piece = None
         for p in self.pieces:
             if p.id == piece_id:
                 piece = p
                 break
-
+        
         if piece is None:
             # 无效动作
             return self._get_state(), -10, False
-
+        
         # 记录曹操当前位置以计算奖励
         cao_cao = None
         for p in self.pieces:
@@ -142,7 +143,7 @@ class HuarongdaoEnv:
         for i in range(piece.y, piece.y + piece.height):
             for j in range(piece.x, piece.x + piece.width):
                 temp_board[i][j] = 0
-
+        
         # 检查移动是否有效
         new_x = piece.x + dx
         new_y = piece.y + dy

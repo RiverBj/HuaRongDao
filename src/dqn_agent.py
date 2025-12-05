@@ -8,6 +8,8 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 
+from .rl_env import HuarongdaoEnv
+
 
 class DQN(nn.Module):
     """深度Q网络"""
@@ -57,16 +59,29 @@ class DQNAgent:
         """存储经验"""
         self.memory.append((state, action, reward, next_state, done))
 
-    def act(self, state: np.ndarray) -> int:
+    def act(self, state: np.ndarray, env: HuarongdaoEnv) -> int:
         """根据当前状态选择动作"""
         # 探索: 随机选择动作
+        direction_map = {(0, 1): 0, (0, -1): 1, (1, 0): 2, (-1, 0): 3}
+        valid_actions = env.get_valid_actions()
         if np.random.rand() <= self.epsilon:
-            return random.randrange(self.action_size)
+            piece_id, dx, dy = random.choice(valid_actions)
+            # 将(piece_id, dx, dy)转换为动作索引
+            # piece_id从1开始，所以要减1；方向按顺序排列
+            # if (dx, dy) in direction_map:
+            direction_index = direction_map[(dx, dy)]
+            action_index = (piece_id - 1) * 4 + direction_index
+            return action_index
 
         # 利用: 选择最佳动作
         state_tensor = torch.FloatTensor(state).unsqueeze(0).to(self.device)
-        q_values = self.q_network(state_tensor)
-        return np.argmax(q_values.cpu().data.numpy())
+        with torch.no_grad():
+            q_values = self.q_network(state_tensor)
+        mask = torch.full_like(q_values, float(-np.inf))
+        for piece_id, dx, dy in valid_actions:
+            id = (piece_id - 1) * 4 + direction_map[(dx, dy)]
+            mask[0, id] = q_values[0, id]
+        return mask.argmax(dim=1).item()
 
     def replay(self, batch_size: int):
         """经验回放"""
@@ -85,8 +100,9 @@ class DQNAgent:
         current_q_values = self.q_network(states).gather(1, actions.unsqueeze(1))
 
         # 计算目标Q值
-        next_q_values = self.target_network(next_states).max(1)[0].detach()
-        target_q_values = rewards + (0.99 * next_q_values * ~dones)
+        with torch.no_grad():
+            next_q_values = self.target_network(next_states).max(1)[0].detach()
+            target_q_values = rewards + (0.99 * next_q_values * ~dones)
 
         # 计算损失
         loss = nn.MSELoss()(current_q_values.squeeze(), target_q_values)

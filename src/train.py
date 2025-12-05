@@ -1,7 +1,5 @@
 """华容道强化学习训练脚本"""
 
-import os
-import sys
 from collections import deque
 
 import numpy as np
@@ -29,17 +27,18 @@ def train(episodes: int = 1000):
         total_reward = 0
         done = False
 
+        # 将方向映射为(dx, dy)
+        directions = [(0, 1), (0, -1), (1, 0), (-1, 0)]
+
         while not done:
-            # 选择动作
-            action = agent.act(state)
+            # 选择动作，传递环境对象以便在探索时选择有效动作
+            action = agent.act(state, env)
 
             # 执行动作
             # 将动作索引转换为实际的动作 (piece_id, dx, dy)
             piece_id = action // 4 + 1  # 棋子ID (1-10)
             direction = action % 4  # 方向 (0-3)
 
-            # 将方向映射为(dx, dy)
-            directions = [(0, 1), (0, -1), (1, 0), (-1, 0)]
             dx, dy = directions[direction]
 
             next_state, reward, done = env.step((piece_id, dx, dy))
@@ -51,6 +50,9 @@ def train(episodes: int = 1000):
             # 更新状态
             state = next_state
             total_reward += reward
+
+            if done:
+                print(f"Done in episode {episode}, Reward: {total_reward}")
 
             # 经验回放
             if len(agent.memory) > 32:
@@ -66,9 +68,7 @@ def train(episodes: int = 1000):
         # 打印进度
         if episode % 100 == 0:
             avg_score = np.mean(scores)
-            print(
-                f"Episode {episode}, Average Score: {avg_score:.2f}, Epsilon: {agent.epsilon:.2f}"
-            )
+            print(f"Episode {episode}, Average Score: {avg_score:.2f}, Epsilon: {agent.epsilon:.2f}")
 
     # 保存模型
     torch.save(agent.q_network.state_dict(), "huarongdao_dqn.pth")

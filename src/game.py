@@ -4,8 +4,21 @@ import sys
 
 import pygame
 
-from src.constants import *
-from src.piece import Piece
+from .constants import (
+    BLACK,
+    BLUE,
+    BOARD_HEIGHT,
+    BOARD_WIDTH,
+    CELL_SIZE,
+    FPS,
+    GREEN,
+    RED,
+    SCREEN_HEIGHT,
+    SCREEN_WIDTH,
+    WHITE,
+    YELLOW,
+)
+from .piece import Piece
 
 
 class HuarongdaoGame:
