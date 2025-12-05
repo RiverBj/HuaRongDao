@@ -2,9 +2,6 @@
 """华容道游戏主入口"""
 
 import argparse
-import sys
-
-import pygame
 
 from src.game import HuarongdaoGame
 from src.play_trained import play_trained_model
@@ -30,9 +27,7 @@ def main():
         choices=["play", "train", "demo"],
         help="运行模式: play(游玩), train(训练) 或 demo(演示训练模型)",
     )
-    parser.add_argument(
-        "--episodes", type=int, default=1000, help="训练集数 (仅在train模式下使用)"
-    )
+    parser.add_argument("--episodes", type=int, default=1000, help="训练集数 (仅在train模式下使用)")
     parser.add_argument(
         "--model",
         type=str,
